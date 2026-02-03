@@ -2,6 +2,8 @@ import unittest
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait # Same 
+from selenium.webdriver.support import expected_conditions as EC # Add from https://stackoverflow.com/questions/62625487/nameerror-name-webdriverwait-is-not-defined
 from bs4 import BeautifulSoup
 
 
@@ -19,3 +21,13 @@ def getsoup(url):
 
     finally:
         driver.quit() # Et ici on ferme
+
+
+def prix(soup):
+    temp = soup.find('div', class_="ProductPrice_below-price-bloc__C0aol")
+    return temp.span.string
+    
+
+
+# Tests
+print(f"Prix : {prix(getsoup("https://www.millesima.fr/champagne-drappier-carte-d-or-0000.html"))}") # OK
