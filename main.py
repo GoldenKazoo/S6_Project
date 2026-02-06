@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait # Same
 from selenium.webdriver.support import expected_conditions as EC # Add from https://stackoverflow.com/questions/62625487/nameerror-name-webdriverwait-is-not-defined
 from bs4 import BeautifulSoup
 
-
+# Question 1
 def getsoup(url):
 
     driver = webdriver.Firefox()
@@ -22,12 +22,67 @@ def getsoup(url):
     finally:
         driver.quit() # Et ici on ferme
 
-
+# Question 2
 def prix(soup):
     temp = soup.find('div', class_="ProductPrice_below-price-bloc__C0aol")
-    return temp.span.string
+    if temp is None:
+        return None
+    price = temp.span.string
+    price = price.replace(',','.')
+    return float(price[:-2])
     
+# Question 3
+# TODO
+
+# Question 4
+def parker(soup):
+    notations = soup.find_all('span', class_="WineCriticSlide_name__qih2Y")
+    for i in range(len(notations)):
+        #print(notations[i].string)
+        if(notations[i].string == "Parker"):
+            print("[+] Parker found !")
+            parker_notation = soup.find('span', class_="WineCriticSlide_rating__jtxAA").string
+            return note(parker_notation)
+        else:
+            return None
+
+
+def note(str):
+    tmp = ""
+    index = str.index("/")
+    for i in range(index):
+        if (str[i] == '+'):
+            return int(tmp)
+        if (str[i] == '-'):
+            tmp2 = str[i+1:index]
+            print(f"Split : {tmp2}")
+            return (int(tmp) + int(tmp2))/2
+        tmp += str[i]
+
+    return int(tmp)
+
+
+# Question 5
+# TODO
+
+# Question 6
+def informations(soup):
+    return str(appellation(soup)) + "," + str(parker(soup)) + "," + str(robinson(soup)) + "," + str(suckling(soup)) + "," + str(prix(soup))
+
 
 
 # Tests
-print(f"Prix : {prix(getsoup("https://www.millesima.fr/champagne-drappier-carte-d-or-0000.html"))}") # OK
+print(f"Prix : {prix(getsoup("https://www.millesima.fr/chateau-citran-2018.html"))}") # OK
+print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/champagne-drappier-carte-d-or-0000.html"))}") 
+print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
+#print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/chateau-peyrabon-2019.html"))}")
+
+#print(note("90-93+/100")) Existe avec - et + ???
+print(note("17/20"))
+print(note("1/20"))
+print(note("1/100"))
+print(note("90+/100"))
+print(note("95-100/100"))
+print(note("90-93/100"))
+
+#print(informations(getsoup("https://www.millesima.fr/chateau-citran-2018.html")))
