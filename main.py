@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait # Same
 from selenium.webdriver.support import expected_conditions as EC # Add from https://stackoverflow.com/questions/62625487/nameerror-name-webdriverwait-is-not-defined
 from bs4 import BeautifulSoup
 
-# Question 1
+# Question 1 : recup la soup de la page
 def getsoup(url):
 
     driver = webdriver.Firefox()
@@ -22,7 +22,7 @@ def getsoup(url):
     finally:
         driver.quit() # Et ici on ferme
 
-# Question 2
+# Question 2 : recup prix a partir de soup de la page
 def prix(soup):
     temp = soup.find('div', class_="ProductPrice_below-price-bloc__C0aol")
     if temp is None:
@@ -33,7 +33,12 @@ def prix(soup):
     
 # Question 3
 # TODO
+def appellation(soup):
+    categorie = soup.find_all("tr")[2]
+    appellation = categorie.find_all("td")[1]
+    return appellation.get_text(strip=True)
 
+    
 # Question 4
 def parker(soup):
     notations = soup.find_all('span', class_="WineCriticSlide_name__qih2Y")
@@ -84,5 +89,7 @@ print(note("1/100"))
 print(note("90+/100"))
 print(note("95-100/100"))
 print(note("90-93/100"))
+
+print(appellation(getsoup("https://www.millesima.fr/chateau-gloria-2016.html")))
 
 #print(informations(getsoup("https://www.millesima.fr/chateau-citran-2018.html")))
