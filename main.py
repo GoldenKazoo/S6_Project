@@ -32,7 +32,7 @@ def prix(soup):
     return float(price[:-2])
     
 # Question 3
-# TODO
+
 def appellation(soup):
     categorie = soup.find_all("tr")[2]
     appellation = categorie.find_all("td")[1]
@@ -68,28 +68,62 @@ def note(str):
 
 
 # Question 5
-# TODO
+
+def find_critic(soup, str):
+    notations = soup.find_all('span', class_="WineCriticSlide_name__qih2Y")
+    for i in range(len(notations)):
+        # print(notations[i].string)
+        if(notations[i].string == str):
+            print(str)
+            notations = soup.find('span', class_="WineCriticSlide_rating__jtxAA").string
+            return note(notations)
+    return None
+
+def robinson(soup):
+    return (find_critic(soup, "J. Robinson"))
+
+
+def suckling(soup):
+    return(find_critic(soup, "J. Suckling"))
+
+def note(str):
+    tmp = ""
+    index = str.index("/")
+    for i in range(index):
+        if (str[i] == '+'):
+            return int(tmp)
+        if (str[i] == '-'):
+            tmp2 = str[i+1:index]
+            print(f"Split : {tmp2}")
+            return (int(tmp) + int(tmp2))/2
+        tmp += str[i]
+
+    return int(tmp)
 
 # Question 6
 def informations(soup):
     return str(appellation(soup)) + "," + str(parker(soup)) + "," + str(robinson(soup)) + "," + str(suckling(soup)) + "," + str(prix(soup))
 
+# Question 7
+#TODO
 
 
 # Tests
-print(f"Prix : {prix(getsoup("https://www.millesima.fr/chateau-citran-2018.html"))}") # OK
-print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/champagne-drappier-carte-d-or-0000.html"))}") 
-print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
+# print(f"Prix : {prix(getsoup("https://www.millesima.fr/chateau-citran-2018.html"))}") # OK
+# print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/champagne-drappier-carte-d-or-0000.html"))}") 
+# print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
+print(f"Robinson rate : {robinson(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
+print(f"Suckling rate : {suckling(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
 #print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/chateau-peyrabon-2019.html"))}")
 
 #print(note("90-93+/100")) Existe avec - et + ???
-print(note("17/20"))
-print(note("1/20"))
-print(note("1/100"))
-print(note("90+/100"))
-print(note("95-100/100"))
-print(note("90-93/100"))
+# print(note("17/20"))
+# print(note("1/20"))
+# print(note("1/100"))
+# print(note("90+/100"))
+# print(note("95-100/100"))
+# print(note("90-93/100"))
 
-print(appellation(getsoup("https://www.millesima.fr/chateau-gloria-2016.html")))
+# print(appellation(getsoup("https://www.millesima.fr/chateau-gloria-2016.html")))
 
 #print(informations(getsoup("https://www.millesima.fr/chateau-citran-2018.html")))
