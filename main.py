@@ -77,18 +77,52 @@ def parker(soup):
             return None
 
 
-def note(str):
-    tmp = ""
-    index = str.index("/")
-    for i in range(index):
-        if (str[i] == '+'):
-            return float(tmp)
-        if (str[i] == '-'):
-            tmp2 = str[i+1:index]
-            # print(f"Split : {tmp2}")
-            return (float(tmp) + float(tmp2))/2
-        tmp += str[i]
-    return float(tmp)
+def note(s):
+    if not s:
+        return None
+    s = s.strip()
+    if '/' in s:
+        s = s.split('/')[0]
+    if '-' in s:
+        a, b = s.split('-')
+        b = b.replace('+', '')
+        try:
+            return (float(a) + float(b)) / 2
+        except ValueError:
+            print("Impossible de convert la note :", s)
+            return None
+    s = s.replace('+', '')
+    try:
+        return float(s)
+    except ValueError:
+        print("Impossible de convert la note :", s)
+        return None
+
+def fill_csv_resume(start_page=26):
+    with open("wine.csv", "a", newline="\n", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        page = start_page
+        while True:
+            print(f"\n=== Page {page} ===")
+            url = f"{URL}/bordeaux.html?page={page}"
+            soup = getsoup(url)
+            wine_links = get_wine_links_bordeaux(soup)
+            print(f"Nombre de vins trouves : {len(wine_links)}")
+            if not wine_links:
+                print("Finito")
+                break
+            for link in wine_links:
+                try:
+                    wine_soup = getsoup(link)
+                    line = informations(wine_soup)
+                    writer.writerow(line.split(","))
+                    print("Lien add :", link)
+                    # time.sleep(1)
+                except Exception as e:
+                    print("Erreur skill issue :", link, e)
+            page += 1
+
+    driver.quit()
 
 
 # Question 5
@@ -163,7 +197,7 @@ def fill_csv():
                     line = informations(wine_soup)
                     writer.writerow(line.split(","))
                     print("Lien add :", link)
-                    time.sleep(1)  # Respectons le site (non)
+                    # time.sleep(1)  # Respectons le site (non)
                 except Exception as e:
                     print("Erreur skill issue :", link, e)
             page = page + 1
@@ -181,13 +215,13 @@ def fill_csv():
 # print(f"Robinson rate : {robinson(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
 # print(f"Suckling rate : {suckling(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
 #print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/chateau-peyrabon-2019.html"))}")
-fill_csv()
+# fill_csv()
 #print(note("90-93+/100")) Existe avec - et + ???
 # print(note("17/20"))
 # print(note("1/20"))
 # print(note("1/100"))
 # print(note("90+/100"))
-# print(note("95-100/100"))
+fill_csv_resume()
 # print(note("90-93/100"))
 
 # print(appellation(getsoup("https://www.millesima.fr/chateau-gloria-2016.html")))
