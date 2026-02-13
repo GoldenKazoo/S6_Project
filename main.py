@@ -1,9 +1,8 @@
-import unittest
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait # Same 
-from selenium.webdriver.support import expected_conditions as EC # Add from https://stackoverflow.com/questions/62625487/nameerror-name-webdriverwait-is-not-defined
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import csv
 import time
@@ -13,8 +12,11 @@ option = Options()
 option.headless = True
 driver = webdriver.Firefox(options=option) #Ouverture page unique
 URL = "https://www.millesima.fr/"
+
 # option = Options()
 # option.headless = True
+
+
 # Question 1 : recup la soup de la page
 
 def getsoup(url):
@@ -23,16 +25,30 @@ def getsoup(url):
     WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body"))) #On wait pour laisser le temps a la page de se charger
     return soup
 
-
-
 # Question 2 : recup prix a partir de soup de la page
+import re
+
 def prix(soup):
     temp = soup.find('div', class_="ProductPrice_below-price-bloc__C0aol")
-    if temp is None:
+    if temp is None or temp.span is None:
         return None
-    price = temp.span.string
-    price = price.replace(',','.')
-    return float(price[:-2])
+    price_str = temp.span.get_text(strip=True)
+    price_str = price_str.replace(',', '.')
+    cleaned = ""
+    for c in price_str:
+        if c.isdigit() or c == '.':
+            cleaned += c
+    if cleaned == "":
+        print("Conversion pas possible :", price_str)
+        return None
+    try:
+        return float(cleaned)
+    except ValueError:
+        print("Conversion pas possible :", price_str)
+        return None
+
+
+
     
 # Question 3
 
@@ -49,7 +65,7 @@ def appellation(soup):
 
     
 # Question 4
-def parker(soup):
+def parker(soup): 
     notations = soup.find_all('span', class_="WineCriticSlide_name__qih2Y")
     for i in range(len(notations)):
         #print(notations[i].string)
@@ -72,13 +88,12 @@ def note(str):
             # print(f"Split : {tmp2}")
             return (float(tmp) + float(tmp2))/2
         tmp += str[i]
-
     return float(tmp)
 
 
 # Question 5
 
-def find_critic(soup, str):
+def find_critic(soup, str): # On a decide de laisser Parker tel quel pour repondre a la question precedente et de factoriser pour les 2 suivantes, meme principe en soit on change le str par Parker
     notations = soup.find_all('span', class_="WineCriticSlide_name__qih2Y")
     for i in range(len(notations)):
         # print(notations[i].string)
@@ -148,7 +163,7 @@ def fill_csv():
                     line = informations(wine_soup)
                     writer.writerow(line.split(","))
                     print("Lien add :", link)
-                    # time.sleep(1)  # Respectons le site (non)
+                    time.sleep(1)  # Respectons le site (non)
                 except Exception as e:
                     print("Erreur skill issue :", link, e)
             page = page + 1
