@@ -20,7 +20,7 @@ URL = "https://www.millesima.fr/"
 def getsoup(url):
     driver.get(url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
-    WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.TAG_NAME, "body"))) #On wait pour laisser le temps a la page de se charger
+    WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body"))) #On wait pour laisser le temps a la page de se charger
     return soup
 
 
@@ -37,9 +37,15 @@ def prix(soup):
 # Question 3
 
 def appellation(soup):
-    categorie = soup.find_all("tr")[2]
-    appellation = categorie.find_all("td")[1]
-    return appellation.get_text(strip=True)
+    table_rows = soup.find_all("tr")
+    for row in table_rows:
+        tds = row.find_all("td")
+        if len(tds) >= 2:
+            header = tds[0].get_text(strip=True)
+            if "Appellation" in header:
+                return tds[1].get_text(strip=True)
+    return None
+
 
     
 # Question 4
@@ -60,14 +66,14 @@ def note(str):
     index = str.index("/")
     for i in range(index):
         if (str[i] == '+'):
-            return int(tmp)
+            return float(tmp)
         if (str[i] == '-'):
             tmp2 = str[i+1:index]
             # print(f"Split : {tmp2}")
-            return (int(tmp) + int(tmp2))/2
+            return (float(tmp) + float(tmp2))/2
         tmp += str[i]
 
-    return int(tmp)
+    return float(tmp)
 
 
 # Question 5
@@ -89,19 +95,19 @@ def robinson(soup):
 def suckling(soup):
     return(find_critic(soup, "J. Suckling"))
 
-def note(str):
-    tmp = ""
-    index = str.index("/")
-    for i in range(index):
-        if (str[i] == '+'):
-            return int(tmp)
-        if (str[i] == '-'):
-            tmp2 = str[i+1:index]
-            # print(f"Split : {tmp2}")
-            return (int(tmp) + int(tmp2))/2
-        tmp += str[i]
+# def note(str):
+#     tmp = ""
+#     index = str.index("/")
+#     for i in range(index):
+#         if (str[i] == '+'):
+#             return int(tmp)
+#         if (str[i] == '-'):
+#             tmp2 = str[i+1:index]
+#             # print(f"Split : {tmp2}")
+#             return (int(tmp) + int(tmp2))/2
+#         tmp += str[i]
 
-    return int(tmp)
+#     return int(tmp)
 
 # Question 6
 def informations(soup):
@@ -128,7 +134,7 @@ def fill_csv():
         writer.writerow(["Appelation", "Parker", "Robinson", "Suckling", "Prix"])
         page = 1
         while True:
-            print(f"\n=== Page {page} ===")\
+            print(f"\n=== Page {page} ===")
             url = f"{URL}/bordeaux.html?page={page}"
             soup = getsoup(url)
             wine_links = get_wine_links_bordeaux(soup)
