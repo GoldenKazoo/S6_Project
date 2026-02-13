@@ -13,12 +13,7 @@ option.headless = True
 driver = webdriver.Firefox(options=option) #Ouverture page unique
 URL = "https://www.millesima.fr/"
 
-# option = Options()
-# option.headless = True
-
-
 # Question 1 : recup la soup de la page
-
 def getsoup(url):
     driver.get(url)
     soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -26,8 +21,6 @@ def getsoup(url):
     return soup
 
 # Question 2 : recup prix a partir de soup de la page
-import re
-
 def prix(soup):
     temp = soup.find('div', class_="ProductPrice_below-price-bloc__C0aol")
     if temp is None or temp.span is None:
@@ -46,12 +39,8 @@ def prix(soup):
     except ValueError:
         print("Conversion pas possible :", price_str)
         return None
-
-
-
-    
-# Question 3
-
+  
+# Question 3 : Renvoie appelation du vin a partir de soup
 def appellation(soup):
     table_rows = soup.find_all("tr")
     for row in table_rows:
@@ -61,10 +50,8 @@ def appellation(soup):
             if "Appellation" in header:
                 return tds[1].get_text(strip=True)
     return None
-
-
-    
-# Question 4
+   
+# Question 4 : Renvoie la note de Parker
 def parker(soup): 
     notations = soup.find_all('span', class_="WineCriticSlide_name__qih2Y")
     for i in range(len(notations)):
@@ -75,7 +62,6 @@ def parker(soup):
             return note(parker_notation)
         else:
             return None
-
 
 def note(s):
     if not s:
@@ -98,7 +84,7 @@ def note(s):
         print("Impossible de convert la note :", s)
         return None
 
-def fill_csv_resume(start_page=26):
+def fill_csv_resume(start_page=60):
     with open("wine.csv", "a", newline="\n", encoding="utf-8") as file:
         writer = csv.writer(file)
         page = start_page
@@ -124,9 +110,7 @@ def fill_csv_resume(start_page=26):
 
     driver.quit()
 
-
-# Question 5
-
+# Question 5 : Pareil pour Robinson et Suckling
 def find_critic(soup, str): # On a decide de laisser Parker tel quel pour repondre a la question precedente et de factoriser pour les 2 suivantes, meme principe en soit on change le str par Parker
     notations = soup.find_all('span', class_="WineCriticSlide_name__qih2Y")
     for i in range(len(notations)):
@@ -158,11 +142,11 @@ def suckling(soup):
 
 #     return int(tmp)
 
-# Question 6
+# Question 6 : Renvoie Appelation + Note Parker + Note Robinson + Note Suckling
 def informations(soup):
     return str(appellation(soup)) + "," + str(parker(soup)) + "," + str(robinson(soup)) + "," + str(suckling(soup)) + "," + str(prix(soup))
 
-# Question 7
+# Question 7 : Recup les bordeaux et stocker leurs infos dans le csv
 def get_wine_links_bordeaux(soup):
     links = []
     cards = soup.select("div.ProductCard_infosContainer__D0bNH")
@@ -176,13 +160,17 @@ def get_wine_links_bordeaux(soup):
                     links.append(full_link)
     return links
 
-
 def fill_csv():
+    global driver
+
     with open("wine.csv", "w", newline="\n", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["Appelation", "Parker", "Robinson", "Suckling", "Prix"])
         page = 1
         while True:
+            if page % 5 == 0: # Pour gerer les timeout qu'on avait, on relance le navigateur
+                driver.quit()
+                driver = webdriver.Firefox(options=option)
             print(f"\n=== Page {page} ===")
             url = f"{URL}/bordeaux.html?page={page}"
             soup = getsoup(url)
@@ -197,15 +185,12 @@ def fill_csv():
                     line = informations(wine_soup)
                     writer.writerow(line.split(","))
                     print("Lien add :", link)
-                    # time.sleep(1)  # Respectons le site (non)
+                    time.sleep(1)  # Respectons le site
                 except Exception as e:
                     print("Erreur skill issue :", link, e)
             page = page + 1
 
     driver.quit()
-
-
-
 
 # Tests
 # print(informations(getsoup("https://www.millesima.fr/chateau-gloria-2016.html")))
@@ -221,7 +206,7 @@ def fill_csv():
 # print(note("1/20"))
 # print(note("1/100"))
 # print(note("90+/100"))
-fill_csv_resume()
+fill_csv()
 # print(note("90-93/100"))
 
 # print(appellation(getsoup("https://www.millesima.fr/chateau-gloria-2016.html")))
