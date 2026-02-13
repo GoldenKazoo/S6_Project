@@ -5,22 +5,25 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait # Same 
 from selenium.webdriver.support import expected_conditions as EC # Add from https://stackoverflow.com/questions/62625487/nameerror-name-webdriverwait-is-not-defined
 from bs4 import BeautifulSoup
+import csv
+import time
+from selenium.webdriver.firefox.options import Options
 
+option = Options()
+option.headless = True
+driver = webdriver.Firefox(options=option) #Ouverture page unique
+URL = "https://www.millesima.fr/"
+# option = Options()
+# option.headless = True
 # Question 1 : recup la soup de la page
+
 def getsoup(url):
+    driver.get(url)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.TAG_NAME, "body"))) #On wait pour laisser le temps a la page de se charger
+    return soup
 
-    driver = webdriver.Firefox()
-    try: # Ici on try pour etre sur de bien fermer le navigateur a la fin et pas en ouvrir a l'infini
-        
-        driver.get(url)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
 
-        WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.TAG_NAME, "body"))) #On wait pour laisser le temps a la page de se charger
-
-        return soup
-
-    finally:
-        driver.quit() # Et ici on ferme
 
 # Question 2 : recup prix a partir de soup de la page
 def prix(soup):
@@ -105,17 +108,45 @@ def informations(soup):
     return str(appellation(soup)) + "," + str(parker(soup)) + "," + str(robinson(soup)) + "," + str(suckling(soup)) + "," + str(prix(soup))
 
 # Question 7
-#TODO
+def fill_csv():
+    with open ("wine.csv", "w", newline="\n", encoding="utf-8") as file: # https://stackoverflow.com/questions/61861172/what-does-the-argument-newline-do-in-the-open-function et utf-8 pour eviter d'avoir des char bizarre a la p;lace des accents
+       writer = csv.writer(file)
+       writer.writerow(["Appelation", "Rober", "Robinson", "Suckling", "Prix"])
+       page = 1
+       while True:
+        url = f"{URL}/bordeaux.html?page={page}"
+        soup = getsoup(url)
+        wine_links = []
+        for a in soup.find_all("a", href=True):
+            href = a["href"]
+            full_link = URL + href
+            if href.endswith(".html") and "chateau" in href and full_link not in wine_links and any(c.isdigit() for c in href):
+                wine_links.append(full_link)
+        if not wine_links:
+            print("WHAT")
+            break
+        for link in wine_links:
+            try:
+                wine_soup = getsoup(link)
+                line = informations(wine_soup)
+                writer.writerow(line.split(","))
+                print("C'est good =) lien obtenu:", link)
+                time.sleep(1)
+            except Exception as e:
+                print("Erreur lors de l'obtention du lien :", link)
+        page = page + 1
+    driver.quit()
 
 
 # Tests
+# print(informations(getsoup("https://www.millesima.fr/chateau-gloria-2016.html")))
 # print(f"Prix : {prix(getsoup("https://www.millesima.fr/chateau-citran-2018.html"))}") # OK
 # print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/champagne-drappier-carte-d-or-0000.html"))}") 
 # print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
-print(f"Robinson rate : {robinson(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
-print(f"Suckling rate : {suckling(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
+# print(f"Robinson rate : {robinson(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
+# print(f"Suckling rate : {suckling(getsoup("https://www.millesima.fr/chateau-lafite-rothschild-2000.html"))}")
 #print(f"Rating parker : {parker(getsoup("https://www.millesima.fr/chateau-peyrabon-2019.html"))}")
-
+fill_csv()
 #print(note("90-93+/100")) Existe avec - et + ???
 # print(note("17/20"))
 # print(note("1/20"))
@@ -126,4 +157,4 @@ print(f"Suckling rate : {suckling(getsoup("https://www.millesima.fr/chateau-lafi
 
 # print(appellation(getsoup("https://www.millesima.fr/chateau-gloria-2016.html")))
 
-#print(informations(getsoup("https://www.millesima.fr/chateau-citran-2018.html")))
+# print(informations(getsoup("https://www.millesima.fr/chateau-citran-2018.html")))
