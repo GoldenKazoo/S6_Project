@@ -48,7 +48,7 @@ def parker(soup):
     for i in range(len(notations)):
         #print(notations[i].string)
         if(notations[i].string == "Parker"):
-            print("[+] Parker found !")
+            # print("[+] Parker found !")
             parker_notation = soup.find('span', class_="WineCriticSlide_rating__jtxAA").string
             return note(parker_notation)
         else:
@@ -63,7 +63,7 @@ def note(str):
             return int(tmp)
         if (str[i] == '-'):
             tmp2 = str[i+1:index]
-            print(f"Split : {tmp2}")
+            # print(f"Split : {tmp2}")
             return (int(tmp) + int(tmp2))/2
         tmp += str[i]
 
@@ -77,7 +77,7 @@ def find_critic(soup, str):
     for i in range(len(notations)):
         # print(notations[i].string)
         if(notations[i].string == str):
-            print(str)
+            # print(str)
             notations = soup.find('span', class_="WineCriticSlide_rating__jtxAA").string
             return note(notations)
     return None
@@ -97,7 +97,7 @@ def note(str):
             return int(tmp)
         if (str[i] == '-'):
             tmp2 = str[i+1:index]
-            print(f"Split : {tmp2}")
+            # print(f"Split : {tmp2}")
             return (int(tmp) + int(tmp2))/2
         tmp += str[i]
 
@@ -108,34 +108,48 @@ def informations(soup):
     return str(appellation(soup)) + "," + str(parker(soup)) + "," + str(robinson(soup)) + "," + str(suckling(soup)) + "," + str(prix(soup))
 
 # Question 7
+def get_wine_links_bordeaux(soup):
+    links = []
+    cards = soup.select("div.ProductCard_infosContainer__D0bNH")
+    for card in cards:
+        tag_of_a = card.select_one("div.ProductCardName_container__XW6iR a")
+        if tag_of_a:
+            href = tag_of_a.get("href")
+            if href.endswith(".html"):
+                full_link = "https://www.millesima.fr" + href
+                if full_link not in links:
+                    links.append(full_link)
+    return links
+
+
 def fill_csv():
-    with open ("wine.csv", "w", newline="\n", encoding="utf-8") as file: # https://stackoverflow.com/questions/61861172/what-does-the-argument-newline-do-in-the-open-function et utf-8 pour eviter d'avoir des char bizarre a la p;lace des accents
-       writer = csv.writer(file)
-       writer.writerow(["Appelation", "Rober", "Robinson", "Suckling", "Prix"])
-       page = 1
-       while True:
-        url = f"{URL}/bordeaux.html?page={page}"
-        soup = getsoup(url)
-        wine_links = []
-        for a in soup.find_all("a", href=True):
-            href = a["href"]
-            full_link = URL + href
-            if href.endswith(".html") and "chateau" in href and full_link not in wine_links and any(c.isdigit() for c in href):
-                wine_links.append(full_link)
-        if not wine_links:
-            print("WHAT")
-            break
-        for link in wine_links:
-            try:
-                wine_soup = getsoup(link)
-                line = informations(wine_soup)
-                writer.writerow(line.split(","))
-                print("C'est good =) lien obtenu:", link)
-                time.sleep(1)
-            except Exception as e:
-                print("Erreur lors de l'obtention du lien :", link)
-        page = page + 1
+    with open("wine.csv", "w", newline="\n", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["Appelation", "Parker", "Robinson", "Suckling", "Prix"])
+        page = 1
+        while True:
+            print(f"\n=== Page {page} ===")\
+            url = f"{URL}/bordeaux.html?page={page}"
+            soup = getsoup(url)
+            wine_links = get_wine_links_bordeaux(soup)
+            print(f"Nombre de vins trouves : {len(wine_links)}")  # Nombre de vins (45 normalement)
+            if not wine_links:
+                print("Finito")
+                break
+            for link in wine_links:
+                try:
+                    wine_soup = getsoup(link)
+                    line = informations(wine_soup)
+                    writer.writerow(line.split(","))
+                    print("Lien add :", link)
+                    # time.sleep(1)  # Respectons le site (non)
+                except Exception as e:
+                    print("Erreur skill issue :", link, e)
+            page = page + 1
+
     driver.quit()
+
+
 
 
 # Tests
